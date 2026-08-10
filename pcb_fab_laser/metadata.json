@@ -1,0 +1,21 @@
+{
+  "$schema": "https://go.kicad.org/pcm/schemas/v1",
+  "name": "PCB Fab Laser SVG Export",
+  "description": "Export SVG layers (B.Cu negative, B.SilkS, Edge.Cuts) for xTool laser PCB fabrication.",
+  "description_full": "Generates two SVG files: an 'ablate' SVG containing the union of (board outline minus B.Cu copper) and B.SilkS, and a 'cut' SVG containing Edge.Cuts. Bottom layers are mirrored. 1:1 mm scale.",
+  "identifier": "com.sai.pcb_fab_laser",
+  "type": "plugin",
+  "author": {
+    "name": "sai"
+  },
+  "license": "MIT",
+  "resources": {},
+  "versions": [
+    {
+      "version": "0.1.0",
+      "status": "development",
+      "kicad_version": "9.0"
+    }
+  ],
+  "tags": ["fabrication", "laser", "svg", "xtool"]
+}
