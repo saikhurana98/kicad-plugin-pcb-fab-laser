@@ -10,32 +10,76 @@ if [ ! -d "$SRC_DIR" ]; then
   exit 1
 fi
 
-KICAD_ROOT="${HOME}/.local/share/kicad"
-if [ ! -d "$KICAD_ROOT" ]; then
-  echo "No KiCad config found at $KICAD_ROOT" >&2
+# KiCad's user data root differs by platform:
+#   Linux:   ~/.local/share/kicad/<ver>/scripting/plugins
+#   macOS:   ~/Documents/KiCad/<ver>/scripting/plugins
+#   Windows: %USERPROFILE%/Documents/KiCad/<ver>/scripting/plugins (Git Bash)
+KICAD_ROOTS=()
+case "$(uname -s)" in
+  Darwin)
+    KICAD_ROOTS+=("${HOME}/Documents/KiCad")
+    ;;
+  Linux)
+    KICAD_ROOTS+=("${HOME}/.local/share/kicad")
+    ;;
+  MINGW*|MSYS*|CYGWIN*)
+    KICAD_ROOTS+=("${HOME}/Documents/KiCad")
+    ;;
+  *)
+    # Unknown platform: try both known layouts.
+    KICAD_ROOTS+=("${HOME}/Documents/KiCad" "${HOME}/.local/share/kicad")
+    ;;
+esac
+
+# Keep only roots that actually exist.
+existing_roots=()
+for root in "${KICAD_ROOTS[@]}"; do
+  [ -d "$root" ] && existing_roots+=("$root")
+done
+
+if [ "${#existing_roots[@]}" -eq 0 ]; then
+  echo "No KiCad user data dir found. Looked in:" >&2
+  for root in "${KICAD_ROOTS[@]}"; do
+    echo "  $root" >&2
+  done
   exit 1
 fi
 
-found=0
-for ver_dir in "$KICAD_ROOT"/*/; do
-  ver="$(basename "$ver_dir")"
-  case "$ver" in
-    [0-9]*.[0-9]*) ;;
-    *) continue ;;
-  esac
-  dest_parent="${ver_dir}scripting/plugins"
-  mkdir -p "$dest_parent"
-  dest="$dest_parent/pcb_fab_laser"
+link_or_copy() {
+  # ln -s where supported; fall back to a copy (e.g. Windows without symlink priv).
+  local src="$1" dest="$2"
   if [ -e "$dest" ] || [ -L "$dest" ]; then
     rm -rf "$dest"
   fi
-  ln -s "$SRC_DIR" "$dest"
-  echo "Linked: $dest -> $SRC_DIR"
-  found=1
+  if ln -s "$src" "$dest" 2>/dev/null; then
+    echo "Linked: $dest -> $src"
+  else
+    cp -R "$src" "$dest"
+    echo "Copied: $src -> $dest (symlink unavailable; re-run install.sh after edits)"
+  fi
+}
+
+found=0
+for KICAD_ROOT in "${existing_roots[@]}"; do
+  for ver_dir in "$KICAD_ROOT"/*/; do
+    [ -d "$ver_dir" ] || continue
+    ver="$(basename "$ver_dir")"
+    case "$ver" in
+      [0-9]*.[0-9]*) ;;
+      *) continue ;;
+    esac
+    dest_parent="${ver_dir}scripting/plugins"
+    mkdir -p "$dest_parent"
+    link_or_copy "$SRC_DIR" "$dest_parent/pcb_fab_laser"
+    found=1
+  done
 done
 
 if [ "$found" -eq 0 ]; then
-  echo "No KiCad version dirs under $KICAD_ROOT" >&2
+  echo "No KiCad version dirs (e.g. 9.0, 10.0) found under:" >&2
+  for root in "${existing_roots[@]}"; do
+    echo "  $root" >&2
+  done
   exit 1
 fi
 
