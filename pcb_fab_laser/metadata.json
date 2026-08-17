@@ -1,8 +1,8 @@
 {
   "$schema": "https://go.kicad.org/pcm/schemas/v1",
   "name": "PCB Fab Laser SVG Export",
-  "description": "Export SVG layers (B.Cu negative, B.SilkS, Edge.Cuts) for xTool laser PCB fabrication.",
-  "description_full": "Generates two SVG files: an 'ablate' SVG containing the union of (board outline minus B.Cu copper) and B.SilkS, and a 'cut' SVG containing Edge.Cuts. Bottom layers are mirrored. 1:1 mm scale.",
+  "description": "Export SVG layers (B.Cu negative, B.SilkS, Edge.Cuts, drills, pads) for xTool laser PCB fabrication.",
+  "description_full": "Generates up to four SVG files sharing one board-outline bounding box: an 'ablate' SVG containing the union of (board outline minus B.Cu copper) and B.SilkS, a 'cut' SVG containing Edge.Cuts, a 'drill' SVG of via and pad drill targets, and a 'pads' SVG that strips the remaining paint off the pads for soldering. Bottom layers are mirrored. 1:1 mm scale.",
   "identifier": "com.sai.pcb_fab_laser",
   "type": "plugin",
   "author": {

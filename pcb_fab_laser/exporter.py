@@ -47,6 +47,7 @@ class ExportOptions:
     include_silk: bool
     include_edge: bool
     include_drill: bool
+    include_pads: bool
     mirror: bool
     rasterize_png: bool
     dpi: int
@@ -108,6 +109,15 @@ class LaserExporter:
                 drill_path = os.path.join(self.opts.outdir, f"{base}_drill.svg")
                 self._write_drill_svg(drill_path, holes, bbox)
                 svg_paths.append(drill_path)
+
+        if self.opts.include_pads:
+            pads = self._pads_poly(pcbnew.B_Cu)
+            _bool_inter(pads, board_outline)
+            _simplify(pads)
+            if pads.OutlineCount():
+                pads_path = os.path.join(self.opts.outdir, f"{base}_pads.svg")
+                self._write_svg(pads_path, [(pads, "black")], bbox)
+                svg_paths.append(pads_path)
 
         written.extend(svg_paths)
 
@@ -180,6 +190,19 @@ class LaserExporter:
             val = fp.Value()
             if val and val.IsOnLayer(layer) and val.IsVisible():
                 self._add_item_shape(val, layer, poly)
+
+        _simplify(poly)
+        return poly
+
+    def _pads_poly(self, layer):
+        """Pad copper on `layer`, for burning the paint back off the pads once
+        traces, holes and outline are done — so they can be soldered."""
+        poly = pcbnew.SHAPE_POLY_SET()
+
+        for fp in self.board.GetFootprints():
+            for pad in fp.Pads():
+                if pad.IsOnLayer(layer):
+                    self._add_item_shape(pad, layer, poly)
 
         _simplify(poly)
         return poly

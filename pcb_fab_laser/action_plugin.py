@@ -31,7 +31,7 @@ class PcbFabLaserPlugin(pcbnew.ActionPlugin):
 
 class ExportDialog(wx.Dialog):
     def __init__(self, parent, board):
-        super().__init__(parent, title="PCB Fab Laser SVG Export", size=(500, 470))
+        super().__init__(parent, title="PCB Fab Laser SVG Export", size=(500, 500))
         self.board = board
 
         panel = wx.Panel(self)
@@ -55,7 +55,11 @@ class ExportDialog(wx.Dialog):
         sizer.Add(self.cb_edge, flag=wx.LEFT | wx.RIGHT, border=16)
         self.cb_drill = wx.CheckBox(panel, label="Drill holes (vias + pad drills → drill.svg)")
         self.cb_drill.SetValue(True)
-        sizer.Add(self.cb_drill, flag=wx.LEFT | wx.RIGHT | wx.BOTTOM, border=16)
+        sizer.Add(self.cb_drill, flag=wx.LEFT | wx.RIGHT, border=16)
+        self.cb_pads = wx.CheckBox(
+            panel, label="Pads (strip paint off pads for soldering → pads.svg)")
+        self.cb_pads.SetValue(True)
+        sizer.Add(self.cb_pads, flag=wx.LEFT | wx.RIGHT | wx.BOTTOM, border=16)
 
         sizer.Add(wx.StaticLine(panel), flag=wx.EXPAND | wx.ALL, border=4)
 
@@ -128,6 +132,7 @@ class ExportDialog(wx.Dialog):
             include_silk=self.cb_silk.GetValue(),
             include_edge=self.cb_edge.GetValue(),
             include_drill=self.cb_drill.GetValue(),
+            include_pads=self.cb_pads.GetValue(),
             mirror=self.cb_mirror.GetValue(),
             rasterize_png=self.cb_png.GetValue(),
             dpi=dpi,
