@@ -9,14 +9,18 @@ A KiCad 9 pcbnew ActionPlugin that exports laser-fabrication SVGs (and optional 
 ## Install / run
 
 ```bash
-./install.sh    # Linux + macOS: symlinks pcb_fab_laser/ into every <kicad_root>/<ver>/scripting/plugins/
-# Windows: powershell -ExecutionPolicy Bypass -File install.ps1
+./install.sh    # Linux, macOS, and Windows-under-Git-Bash
+# Native Windows PowerShell: powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
-Plugin root per OS: `~/.local/share/kicad` (Linux), `~/Documents/KiCad` (macOS),
-`%USERPROFILE%\Documents\KiCad` (Windows). `install.ps1` falls back to a **copy** when it
-can't create a symlink, so Windows installs go stale until the script is re-run — the two
-installers must stay in sync. `README.md` documents all three paths; update it when they change.
+Both scripts symlink `pcb_fab_laser/` into every `<kicad_root>/<ver>/scripting/plugins/`
+they find. Plugin root per OS: `~/.local/share/kicad` (Linux), `~/Documents/KiCad`
+(macOS and Windows). Both fall back to a **copy** when symlink creation fails (Windows
+without Developer Mode), and a copy is a snapshot — re-run the installer after every edit.
+
+**Two installers cover the same ground and must stay in sync** (`install.sh` via
+`uname` incl. `MINGW*|MSYS*|CYGWIN*`, `install.ps1` via `MyDocuments`). `README.md`
+documents both plus a manual path table — update it when paths change.
 
 Then in KiCad: **Tools → External Plugins → Refresh Plugins**, then run *PCB Fab Laser SVG Export*.
 
@@ -62,7 +66,9 @@ When touching these, keep the try/except-narrow-then-broaden shape. Note the del
 
 ### PNG rasterization
 
-Out-of-process only. `_detect_rasterizer()` probes PATH in order `inkscape`, `rsvg-convert`, `magick`, `convert`; `_rasterize()` holds a per-tool argv. Adding a tool means editing both. Missing tool → hard `RuntimeError` (not a silent skip) when PNG was requested.
+Out-of-process only. `_detect_rasterizer()` probes in order `inkscape`, `rsvg-convert`, `magick`, `convert`; `_rasterize()` holds a per-tool argv. Adding a tool means editing both. Missing tool → hard `RuntimeError` (not a silent skip) when PNG was requested.
+
+Lookup goes through `_which()`, not `shutil.which()` directly: it falls back to the `_EXTRA_BIN_DIRS` probe (`/opt/homebrew/bin`, `/usr/local/bin`) and `_rasterize` substitutes the resolved absolute path into `cmd[0]`. Reason: a Finder/Dock-launched KiCad on macOS inherits a minimal `PATH` with no Homebrew. Keep new tool lookups on `_which()`.
 
 ## Known gaps
 

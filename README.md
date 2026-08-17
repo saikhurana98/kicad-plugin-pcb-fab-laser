@@ -27,7 +27,9 @@ and skip any you don't want. Anything you uncheck in the dialog isn't written.
 Optional PNG rasterization at a chosen DPI, for laser software that prefers rasters.
 Needs one of `inkscape`, `rsvg-convert`, or ImageMagick (`magick` / `convert`) on
 `PATH` — the export fails loudly rather than silently skipping if PNG is requested
-and none is found.
+and none is found. On macOS, `/opt/homebrew/bin` and `/usr/local/bin` are also
+probed directly, since a Dock-launched KiCad inherits a minimal `PATH` that omits
+Homebrew.
 
 **Mirror** is on by default, since the artwork is for the bottom copper layer seen
 through the board.
@@ -60,6 +62,9 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 Target is `%USERPROFILE%\Documents\KiCad\<ver>\scripting\plugins\`. The script
 symlinks when it can (needs Developer Mode or an elevated shell) and otherwise
 copies — a copy is a snapshot, so re-run the script after each update.
+
+If you have Git Bash / MSYS / Cygwin, `./install.sh` works there too and does the
+same thing.
 
 ### Manual (any OS, or if the scripts find nothing)
 

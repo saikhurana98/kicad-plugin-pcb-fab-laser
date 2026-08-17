@@ -365,10 +365,30 @@ class LaserExporter:
 
 # ---------- rasterizer ----------
 
+# GUI apps on macOS launched from Finder/Dock inherit a minimal PATH that
+# excludes Homebrew dirs, so shutil.which() misses tools installed there.
+# Probe these explicitly as a fallback.
+_EXTRA_BIN_DIRS = (
+    "/opt/homebrew/bin",  # Homebrew on Apple Silicon
+    "/usr/local/bin",     # Homebrew on Intel macOS / common Linux
+)
+
+
+def _which(name):
+    """Full path to `name` on PATH, or in known extra bin dirs, else None."""
+    path = shutil.which(name)
+    if path:
+        return path
+    for d in _EXTRA_BIN_DIRS:
+        cand = os.path.join(d, name)
+        if os.access(cand, os.X_OK):
+            return cand
+    return None
+
+
 def _detect_rasterizer():
     for name in ("inkscape", "rsvg-convert", "magick", "convert"):
-        path = shutil.which(name)
-        if path:
+        if _which(name):
             return name
     return None
 
@@ -404,6 +424,12 @@ def _rasterize(tool, svg_path, png_path, dpi):
         ]
     else:
         raise RuntimeError(f"Unknown rasterizer: {tool}")
+
+    # Resolve to a full path so subprocess finds it even under the minimal PATH
+    # a Finder/Dock-launched macOS app inherits.
+    resolved = _which(tool)
+    if resolved:
+        cmd[0] = resolved
 
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0:
